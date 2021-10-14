@@ -4,7 +4,13 @@ module.exports = {
   var odds = Math.floor(Math.random()*10);
   var crimeResults = (odds >= 0 && !(odds > 6)) ? "pass":"fail";
   var glockResults = (oddsG >= 0 && !(odds > 7)) ? "pass":"fail";
-  var crimeEuros = Math.floor(Math.random()*27);
+  var crimeEuros = Math.floor(Math.random()*100);
+  
+  do {
+    crimeEuros = Math.floor(Math.random()*100);
+  }
+  while (crimeEuros < 45)
+  
   var passMes = Math.floor(Math.random()*crimePass.length);
   var failMes = Math.floor(Math.random()*crimeFail.length);
   async function crimeCom() {

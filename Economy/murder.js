@@ -1,7 +1,11 @@
 module.exports = {
   execute(Discord, message, user, Euro, EuroCirc) {
     async function murderCom() {
-    odds = Math.floor(Math.random()*10);
+    
+
+    messageArr = ['you literally killed someone', 'its safe to say they didnt stay strapped, they got clapped', 'you said hi and they didnt say hi back, you actually shot them']
+    var mesNum = Math.floor(Math.random()*messageArr.length);
+    var odds = Math.floor(Math.random()*10);
     if (db.has(`inv.${user.id}`, `dagger`)) {
      results = (odds >= 0 && !(odds > 6)) ? "pass" : "fail"; 
     } else {
@@ -25,8 +29,8 @@ module.exports = {
        murderPassEmbed = new Discord.MessageEmbed()
        .setColor("#0198FE")
        .setTitle("***murder successful:***")
-       .setDescription(`you've successfully murdered ${user}€`)
-       .addFields({name: "you pass -", value: `${euroAmount}`})
+       .setDescription(`${messageArr[mesNum]} ${user} died`)
+       .addFields({name: "you gain -", value: `${euroAmount}`})
        message.channel.send(murderPassEmbed)
        user = message.mentions.users.first();
        await db.subtract(`Euro.${user.id}`, parseInt(euroAmount))
@@ -36,7 +40,7 @@ module.exports = {
         murderFailEmbed = new Discord.MessageEmbed()
         .setColor("#FE6D01")
         .setTitle("***murder unsuccessful:***")
-        .setDescription(`youve failed to murder ${user}€`)
+        .setDescription(`you get caught trying to kill ${user} youre now probably on an fbi database`)
         .addFields({name: "you loose -", value: `${euroAmount}`})
         message.channel.send(murderFailEmbed)
         await db.add(`EuroCirc`, parseInt(euroAmount))

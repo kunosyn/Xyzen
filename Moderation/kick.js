@@ -2,7 +2,6 @@ module.exports = {
  execute(user, Discord, args, message) {
  user = message.author;
  const userPermissions = user.permissions.toArray();
- try {
  if (args[0] == null && userPermissions.includes('KICK_MEMBERS')) {
    noUserKickEmbed = new Discord.MessageEmbed()
    .setColor("#fa2a2a")
@@ -24,12 +23,5 @@ module.exports = {
     .setDescription("*\`error:\` missing kicking permissions*")
     message.channel.send(noKickPermEmbed)
   }
-} 
-catch(error) {
-  message.channel.send(error)
-}
-finally {
- return;
-}
-}
+ } 
 }

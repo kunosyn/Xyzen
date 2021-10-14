@@ -2,7 +2,8 @@
 DEFINING CONSTANT VARIABLES BELOW
 */
 
-const { Client, MessageEmbed, Discord } = require('discord.js');
+const { Client, MessageEmbed } = require('discord.js');
+const Discord = require('discord.js');
 const config = require('./config.js');
 const commands = require('./help.js');
 const db = require('quick.db');
@@ -17,10 +18,6 @@ const jobTalkedRecently = new Set();
 const taskTalkedRecently = new Set();
 const crimeTalkedRecently = new Set();
 const spamList = new Set();
-
-
-//const guild = cient.guilds.get("814155373442629664");
-//const memberCount = guild.members.filter(member => !member.user.bot).size;
 
 // -- Defines Command Files --
 
@@ -41,31 +38,71 @@ const pingC = require('./Misc/ping.js');
 const sayC = require('./Misc/say.js');
 const botC = require('./Misc/bot.js');
 const restartC = require('./Misc/restart.js');
-const updatelogsC = require('./Misc/updateLogs.js');
+const dmC = require('./Misc/dm.js');
 const kickC = require('./Moderation/kick.js');
 const banC = require('./Moderation/ban.js');
 const muteC = require('./Moderation/mute.js');
 const warnC = require('./Moderation/warn.js');
 const spamCheck = require('./Moderation/spamCheck.js');
 const bannedWords = require('./Moderation/bannedWords.js');
+var statNum = 0;
+var appearNum = 0;
+var statuses = [
+	`${config.prefix}help`,
+	'We have moderation!',
+	'Games with life',
+	'The economy',
+	'Chug Jug With You on loop'
+];
+
+var statType = [
+  'LISTENING', 
+  'WATCHING', 
+  'PLAYING', 
+  'WATCHING', 
+  'LISTENING'
+];
+
+var aName = 'Bot Restarting';
+var aType = 'PLAYING';
+var appearance = 'dnd';
 
 let bot = new Client({
 	fetchAllMembers: true, // --Remove this if the bot is in large guilds--
 	presence: {
 		status: 'dnd',
 		activity: {
-			name: `the economy || ${config.prefix}help`,
-			type: 'LISTENING'
+			name: aName,
+			type: aType
 		}
 	}
 });
 
 console.log('Starting Login!');
-bot.on('message', async message => {
-  spamCheck.execute(user, Discord, message, db, spamList, msgNum);
-  bannedWords.execute(user, Discord, message, db, args, bannedWords);
+bot.on('ready', () => {
+	console.log(`Logged in as ${bot.user.tag}.`);
+	bot.user.setActivity('Bot Restarted', { type: 'PLAYING' });
 
-  // --Economic circulation reset--
+	setInterval(() => {
+		if (statNum === statuses.length) {
+			statNum = 0;
+			aName = statuses[0];
+			aType = statType[0];
+		} else {
+			statNum++;
+			aName = statuses[statNum];
+			aType = statType[statNum];
+		}
+
+		bot.user.setActivity(aName, { type: aType });
+	}, 20000);
+});
+
+bot.on('message', async message => {
+	spamCheck.execute(user, Discord, message, db, spamList, msgNum);
+	bannedWords.execute(user, Discord, message, db, bannedwords, config);
+	console.log(`${message.author.username} said ${message}`);
+	// --Economic circulation reset--
 	var date = new Date();
 	var day = date.getDay();
 	if (day != 2) {
@@ -77,18 +114,21 @@ bot.on('message', async message => {
 
 	// -Defining Variables-
 	var user = message.author || message.mentions.users.first();
+  var guild = message.guild;
+
 	var Euro = await db.fetch(`Euro.${user.id}`);
 	var BankedEuros = await db.fetch(`BankedEuros.${user.id}`);
 	var Breifcase = await db.fetch(`Breifcase.${user.id}`);
-	var EuroCirc = await db.fetch(`EuroCirc`);
+	var EuroCirc = await db.fetch(`EuroCirc.${guild.id}`);
 	var userJob = await db.fetch(`userJob.${user.id}`);
 	var jobIncome = await db.fetch(`jobIncome.${user.id}`);
 	var inv = await db.fetch(`inv.${user.id}`);
-  var uLawSuits = await db.fetch(`uLawSuits.${user.id}`);
-  var lawSuits = await db.fetch(`lawSuits`)
+	var uLawSuits = await db.fetch(`uLawSuits.${user.id}`);
+	var lawSuits = await db.fetch(`lawSuits`);
 	var restarted = await db.fetch(`restarted`);
 	var uJobID = await db.fetch(`uJobID.${user.id}`);
-  var warnings = await db.fetch(`warnings.${user.id}`);
+	var warnings = await db.fetch(`warnings.${user.id}.${guild.id}`);
+	var msgNum = await db.fetch(`msgNum.${user.id}`);
 
 	// --Creating database values if none found--
 	if (Euro == null) {
@@ -97,26 +137,36 @@ bot.on('message', async message => {
 	}
 
 	if (inv == null || inv == {}) {
-		await db.set(`inv.${user.id}`, { Empty: 'Empty!' });
+		await db.set(`inv.${user.id}`, { coin: { amt: 1, id: 'coin' } });
 	}
-  
-  if (uLawSuits == null) {
-    await db.set(`uLawSuits.${user.id}`, {sID: 0, sReason: "N/A", pros: "N/A", def: "N/A"})
-  }
 
-  if (warnings == null) {
-    warnings = 0
-    warnings = await db.set(`warnings.${user.id}`, 0);
-  }
-  
-  if (msgNum == null) {
-    msgNum = 0
-    msgNum = await db.set(`msgNum.${user.id}`, 0);
-  }
+	if (uLawSuits == null) {
+		await db.set(`uLawSuits.${user.id}`, {
+			sID: 0,
+			sReason: 'N/A',
+			pros: 'N/A',
+			def: 'N/A'
+		});
+	}
 
-  if (lawSuits == null) {
-    await db.set(`lawSuits.${user.id}`, {sID: 0, sReason: "N/A", pros: "N/A", def: "N/A"})
-  }
+	if (warnings == null) {
+		warnings = 0;
+		warnings = await db.set(`warnings.${user.id}`, 0);
+	}
+
+	if (msgNum == null) {
+		msgNum = 0;
+		msgNum = await db.set(`msgNum.${user.id}`, 0);
+	}
+
+	if (lawSuits == null) {
+		await db.set(`lawSuits.${user.id}`, {
+			sID: 0,
+			sReason: 'N/A',
+			pros: 'N/A',
+			def: 'N/A'
+		});
+	}
 
 	if (userJob == null) {
 		userJob = 'none';
@@ -147,40 +197,38 @@ bot.on('message', async message => {
 	if (message.content.startsWith(config.prefix)) {
 		let args = message.content.slice(config.prefix.length).split(' ');
 		let command = args.shift().toLowerCase();
-		var user = message.author;
-
+		var user = message.author || message.mentions.users.first();
+    
 		// -Commands start below-
-		switch (command) {
-      /* 
+		switch(command) {
+			/* 
      MISC COMMANDS BELOW
      */
-     
+
 			// -Ping Command starts below-
 			case 'ping':
 				pingC.execute(message);
-				break;
+			break;
 
 			// -Say Command starts below-
 			case 'say':
 			case 'repeat':
 				sayC.execute(args, message);
-				break;
+			break;
 
 			// -Bot Command Starts below-
 			case 'bot':
 			case 'botInfo':
 				botC.execute(Discord, message);
-				break;
+			break;
 			// -Restart Command starts below-
 			case 'restart':
 				restartC.execute(user, message);
-				break;
+			break;
 
-			// -UpdateLogs Command starts below-
-			case 'updatelogs':
-			case 'updates':
-				updatelogsC.execute(Discord, Message);
-				break;
+			case 'dm':
+				dmC.execute(message, Discord, user);
+			break;
 
 			/* 
      ECONOMY COMMANDS BELOW
@@ -202,12 +250,22 @@ bot.on('message', async message => {
 			case 'balance':
 			case 'bal':
 			case 'about':
-				balanceC.execute(message, args, Discord, Euro, BankedEuros, userJob, user);
+				balanceC.execute(message,args);
 			break;
 
 			// -Task Command starts below-
 			case 'task':
-				taskC.execute(message,Discord,db,Euro,taskFailed, taskPass,taskFailed,EuroCirc,taskTalkedRecently);
+				taskC.execute(
+					message,
+					Discord,
+					db,
+					Euro,
+					taskFailed,
+					taskPass,
+					taskFailed,
+					EuroCirc,
+					taskTalkedRecently
+				);
 			break;
 
 			// -Murder Command starts below-
@@ -220,48 +278,73 @@ bot.on('message', async message => {
 			case 'info':
 			case 'eco':
 			case 'economy':
-				infoC.execute(Discord,message, EuroCirc);
+				infoC.execute(Discord, message, EuroCirc);
 			break;
 
 			// -Work Command starts below-
 			case 'job':
 			case 'work':
-				jobC.execute(Discord, message, db, Euro,BankedEuros, user, args, userJob, jobIncome, EuroCirc, jobPass, jobTalkedRecently, uJobID);
+				jobC.execute(
+					Discord,
+					message,
+					db,
+					Euro,
+					BankedEuros,
+					user,
+					args,
+					userJob,
+					jobIncome,
+					EuroCirc,
+					jobPass,
+					jobTalkedRecently,
+					uJobID
+				);
 			break;
 
 			// -Crime Command starts below-
 			case 'crime':
-				crimeC.execute(Discord, user, message, Euro, inv,crimePass, crimeFail, db, crimeTalkedRecently, EuroCirc);
+				crimeC.execute(
+					Discord,
+					user,
+					message,
+					Euro,
+					inv,
+					crimePass,
+					crimeFail,
+					db,
+					crimeTalkedRecently,
+					EuroCirc
+				);
 			break;
 
 			// -Inventory Command starts below-
 			case 'inv':
 			case 'inventory':
 				invC.execute(message, Discord, user, db, inv);
-			break;
+				break;
 
 			// -Shop Command starts below-
 			case 'shop':
 			case 'store':
 				shopC.execute(args, Discord, message, db, Euro, user, inv);
-			break;
+				break;
 
 			// -Blackmarket Command starts below-
 			case 'blackmarket':
 				bmC.execute();
-			break;
+				break;
 
 			// -Deposit Command starts below-
 			case 'deposit':
 			case 'dep':
 				depositC.execute(Discord, user, args, message, db, Euro, BankedEuros);
-			break;
+				break;
 
 			// - Withdraw Command below-
 			case 'withdraw':
 			case 'with':
 				withdrawC.execute(Discord, user, args, message, db, Euro, BankedEuros);
-			break;
+				break;
 
 			/* 
       MODERATION COMMANDS BELOW
@@ -270,20 +353,20 @@ bot.on('message', async message => {
 			// -Ban Command starts below-
 			case 'ban':
 				banC.execute(user, Discord, args, message);
-			break;
+				break;
 
 			// -Kick Command starts below-
 			case 'kick':
 				kickC.execute(user, Discord, args, message);
-			break;
+				break;
 
 			case 'warn':
 				warnC.execute(user, args, db);
-			break;
+				break;
 
 			case 'mute':
 				muteC.execute(message, user, db);
-			break;
+				break;
 
 			/* 
       HELP COMMAND BELOW  --- DO NOT CHANGE ---
@@ -353,6 +436,16 @@ bot.on('message', async message => {
 					}
 				}
 				message.channel.send(embed);
+				break;
+
+			default:
+				notFoundEmbed = new Discord.MessageEmbed()
+					.setColor('RED')
+					.setTitle('***command not found:***')
+					.setDescription(
+						`**invalid command:** *\`${message}\`* \n *\`please check the command list and make sure you entered a valid command if you believe there is an issue, contact us at our support server\`*\n \n **help command:** *\`.help\`* \n **support server:** *https://discord.gg/UN8fmeUvx4*`
+					);
+				message.channel.send(notFoundEmbed);
 				break;
 		}
 	}

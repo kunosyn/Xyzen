@@ -14,19 +14,57 @@ module.exports = {
           .setTitle("***cooldown:***")
           .setDescription("*\`error:\` the cooldown on this command is 5 minutes, please wait until its been that long since using the command before trying again*")
           message.channel.send(cooldownEmbed)
-        } else {
-          jobSuccessEmbed = new Discord.MessageEmbed()
-          .setColor("#0198FE")
-          .setTitle("***job successful:***")
-          .setDescription(jobPass[passMsg])
-          .addFields({name: `*you earn -* `, value: `*\`${jobIncome}€\`*`})
-          await db.add(`Euro.${user.id}`, parseInt(jobIncome))
-          await db.subtract(`EuroCirc`, parseInt(jobIncome))
-          message.channel.send(jobSuccessEmbed)
-          jobTalkedRecently.add(message.author.id);
-          setTimeout(() => {
-            jobTalkedRecently.delete(message.author.id);
-          },  300000)
+        } else if (EuroCirc >= parseInt(jobIncome)) {
+          let job_type_rng = Math.floor(Math.random() * 1);
+          let job_success = false;
+
+          if (job_type_rng === 0) {
+            let phrases = ["Apple", "Orange", "Hello", "Money", "Hello World", "Give money"]
+            let phrase_rng = Math.floor(Math.random() * phrases.length)
+
+            let embed = new Discord.MessageEmbed()
+            .setColor("#FFFFFF")
+            .setTitle("***memorize:***")
+            .setDescription(`*phrase*: ${phrases[phrase_rng]}`)
+            message.channel.send(embed);
+
+            setTimeout(() => {
+              message.delete();
+            }, 2000);
+          } else if(job_type_rng == 1) {
+
+          }
+
+          if (job_success) {
+            jobSuccessEmbed = new Discord.MessageEmbed()
+            .setColor("#0198FE")
+            .setTitle("***job successful:***")
+            .setDescription(jobPass[passMsg])
+            .addFields({name: `*you earn -* `, value: `*\`${jobIncome}€\`*`})
+            await db.add(`Euro.${user.id}`, parseInt(jobIncome))
+            await db.subtract(`EuroCirc`, parseInt(jobIncome))
+            message.channel.send(jobSuccessEmbed)
+            jobTalkedRecently.add(message.author.id);
+            setTimeout(() => {
+              jobTalkedRecently.delete(message.author.id);
+            },  300000)
+          } else {
+            let eurorng = Math.floor(Math.random() * 20);
+
+            jobFailureEmbed = new Discord.MessageEmbed()
+            .setColor("#fa2a2a")
+            .setTitle("**job not done:***")
+            .setDescription(`*you\'ve failed your job, however will still earn ${eurorng}€`)
+            message.channel.send(jobFailureEmbed);
+            
+            await db.add(`Euro.${user.id}`, parseInt(eurorng));
+            await db.subtract(`EuroCirc`, parseint(eurorng));
+
+            jobTalkedRecently.add(message.author.id);
+            setTimeout(() => {
+              jobTalkedRecently.delete(message.author.id)
+            }, 300000)
+          }
         }
       } else if (EuroCirc < parseInt(jobIncome)) {
        euroCircMax = new Discord.MessageEmbed()
@@ -45,7 +83,7 @@ module.exports = {
        jobClaimEmbed = new Discord.MessageEmbed()
        .setColor("#4dc4f0")
        .setTitle("***job list:***")
-       .setDescription("***garbage worker:*** \n*\`pays; 10€\`\n\`requires; 0€\`*\n\n***retail worker*** \n*\`pays; 25€\`\n\`requires; 300€\`*\n\n***tech support***\n*\`pays; 45€\`\n\`requires; 800€\`*")
+       .setDescription("***garbage worker:*** \n*\`pays; 10€\`\n\`requires; 0€\`*\n\n***retail worker:*** \n*\`pays; 25€\`\n\`requires; 300€\`*\n\n***tech support:***\n*\`pays; 45€\`\n\`requires; 800€\`*")
        message.channel.send(jobClaimEmbed)
       } else if (args[0] == "claim" && args[1] != null) {
          if (args[1]+" "+args[2] != userJob) {
